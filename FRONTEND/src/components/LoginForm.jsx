@@ -21,6 +21,8 @@ const LoginForm = ({ setLogin }) => {
         try {
             const data = await loginUser(email, password)
 
+            console.log("loginUser: ", data.user)
+
             dispatch(login(data.user));
             navigate({ to: '/dashboard' });
 
