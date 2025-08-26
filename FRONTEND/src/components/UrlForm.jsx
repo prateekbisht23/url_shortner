@@ -1,16 +1,28 @@
 import React from 'react'
 import { useState } from 'react'
-import { createShortUrl } from '../api/shortUrl.api';
+import { createShortUrl } from '../api/shortUrl.api.js';
+import { useSelector } from 'react-redux';
+import { queryClient } from '../main'
 
 const UrlForm = () => {
 
   const [url, setUrl] = useState("https://github.com");
   const [shortUrl, setShortUrl] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [customSlug, setCustomSlug] = useState("");
+  const [error, setError] = useState(null);
+
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   const handleSubmit = async () => {
-    const shortUrl = await createShortUrl(url);
-    setShortUrl(shortUrl);
+    try {
+      const shortUrl = await createShortUrl(url, customSlug);
+      setShortUrl(shortUrl);
+      queryClient.invalidateQueries({ queryKey: ['userUrls'] })
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Something went wrong');
+    }
   }
 
   const handleCopy = () => {
@@ -36,24 +48,42 @@ const UrlForm = () => {
             value={url}
             onInput={(e) => setUrl(e.target.value)}
             placeholder="https://example.com/very-long-url"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+            className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
           />
         </div>
 
-        {/* {error && (
-            <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
-              {error}
-            </div>
-          )} */}
+        {error && (
+          <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <button
           onClick={handleSubmit}
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
+          className="w-full text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
         >
           Shorten URL
         </button>
       </div>
+
+      {isAuthenticated && (
+        <div className='mt-6 rounded-lg'>
+          <label htmlFor="customSlug" className='block text-sm font-medium text-gray-700 mb-2'>
+            Custom URL (Optional)
+          </label>
+          <input
+            type="text"
+            id="customSlug"
+            value={customSlug}
+            onInput={(e) => setCustomSlug(e.target.value)}
+            placeholder="Enter custom url"
+            className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+          />
+        </div>
+      )}
+
+
 
       {shortUrl && (
         <div className="mt-6 p-4 rounded-lg">
@@ -64,8 +94,8 @@ const UrlForm = () => {
               value={shortUrl}
               readOnly
               className={`flex-1 px-3 py-2 bg-white border rounded text-sm ${copied
-                  ? "bg-green-200 border-green-300"
-                  : ""
+                ? "bg-green-200 border-green-300"
+                : ""
                 }`}
             />
             <button
