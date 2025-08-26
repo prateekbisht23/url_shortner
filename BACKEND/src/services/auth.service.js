@@ -8,7 +8,7 @@ export const register_user_service = async (name, email, password) => {
 
     const newUser = await create_user(name, email, password);
     const token = signToken({id: newUser._id});
-    return token;
+    return {token, user};
 }
 
 export const login_user_service = async (email, password) => {

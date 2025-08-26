@@ -20,9 +20,11 @@ const RegisterForm = ({ setLogin }) => {
 
         try {
             const data = await registerUser(name, email, password)
-            setLoading(false)
+            console.log("registerUser: ", data.user)
             dispatch(login(data.user))
             navigate({ to: '/dashboard' });
+            console.log("navigate Successful")
+            console.log("registeration successful")
         } catch (err) {
             setError(err.message || 'Registration failed')
         } finally {
